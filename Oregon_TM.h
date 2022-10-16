@@ -60,10 +60,8 @@ class Oregon_TM
     int max_buffer_size = OREGON_SEND_BUFFER_SIZE;
     int  buffer_size = 24;
     byte* SendBuffer;
-    byte protocol = 2;
     word sens_type = 0x0000;
     int timing_corrector2 = 4;
-    int timing_corrector3 = 2;
 
     Oregon_TM(byte, int);
     Oregon_TM(byte);
