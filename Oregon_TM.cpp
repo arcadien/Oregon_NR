@@ -327,19 +327,16 @@ void Oregon_TM::setChannel(byte channel)
     {
       channel_code = 0x10;
       setId(0xE3);
-      send_time = 39000;
     }
     if (channel == 2)
     {
       channel_code = 0x20;
       setId(0xE3);
-      send_time = 41000;
     }
     if (channel == 3)
     {
       channel_code = 0x40;
       setId(0xBB);
-      send_time = 43000;
     }
   }
 
@@ -349,19 +346,16 @@ void Oregon_TM::setChannel(byte channel)
     {
       channel_code = 0x10;
       setId(0xE3);
-      send_time = 39000;
     }
     if (channel == 2)
     {
       channel_code = 0x20;
       setId(0xE3);
-      send_time = 41000;
     }
     if (channel == 3)
     {
       channel_code = 0x40;
       setId(0xBB);
-      send_time = 43000;
     }
   }
 
@@ -372,33 +366,28 @@ void Oregon_TM::setChannel(byte channel)
     {
       channel_code = 0x10;
       setId(0xF1);
-      send_time = 53000;
     }
     if (channel == 2)
     {
       channel_code = 0x20;
       setId(0x92);
-      send_time = 59000;
     }
     if (channel == 3)
     {
       channel_code = 0x30;
       setId(0xAA);
-      send_time = 61000;
     }
 
     if (channel == 4)
     {
       channel_code = 0x40;
       setId(0x8A);
-      send_time = 67000;
     }
 
     if (channel >= 5)
     {
       channel_code = 0x50;
       setId(0xB1);
-      send_time = 71000;
     }
   }
 
@@ -536,12 +525,8 @@ void Oregon_TM::setComfort(float temp, byte hum)
 
 bool Oregon_TM::transmit()
 {
-  if (millis() >= time_marker_send && send_time)
-  {
+  
     SendPacket();
-    time_marker_send = millis() + send_time;
     return true;
-  }
-  else
-    return false;
+ 
 }

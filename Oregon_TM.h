@@ -101,7 +101,6 @@ class Oregon_TM
 
     unsigned long time_marker = 0;
     unsigned long time_marker_send = 0;
-    unsigned long send_time = 0;
     bool prevbit = 1;
     bool prevstate = 1;
 
