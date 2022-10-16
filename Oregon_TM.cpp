@@ -319,80 +319,8 @@ void Oregon_TM::setType(word type)
 
 void Oregon_TM::setChannel(byte channel)
 {
-  byte channel_code;
-
-  if (sens_type == THGN132)
-  {
-    if (channel <= 1)
-    {
-      channel_code = 0x10;
-      setId(0xE3);
-    }
-    if (channel == 2)
-    {
-      channel_code = 0x20;
-      setId(0xE3);
-    }
-    if (channel == 3)
-    {
-      channel_code = 0x40;
-      setId(0xBB);
-    }
-  }
-
-  if (sens_type == THN132)
-  {
-    if (channel <= 1)
-    {
-      channel_code = 0x10;
-      setId(0xE3);
-    }
-    if (channel == 2)
-    {
-      channel_code = 0x20;
-      setId(0xE3);
-    }
-    if (channel == 3)
-    {
-      channel_code = 0x40;
-      setId(0xBB);
-    }
-  }
-
-  if (sens_type == BTHGN129)
-  {
-
-    if (channel <= 1)
-    {
-      channel_code = 0x10;
-      setId(0xF1);
-    }
-    if (channel == 2)
-    {
-      channel_code = 0x20;
-      setId(0x92);
-    }
-    if (channel == 3)
-    {
-      channel_code = 0x30;
-      setId(0xAA);
-    }
-
-    if (channel == 4)
-    {
-      channel_code = 0x40;
-      setId(0x8A);
-    }
-
-    if (channel >= 5)
-    {
-      channel_code = 0x50;
-      setId(0xB1);
-    }
-  }
-
   SendBuffer[2] &= 0x0F;
-  SendBuffer[2] += channel_code & 0xF0;
+  SendBuffer[2] += (channel << 4) & 0xF0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
