@@ -46,12 +46,7 @@
 
 #define THGN132   0x1D20
 #define THN132   0xEC40
-#define THGR810   0xF824
-#define RTGN318   0xDCC3
-#define THP	  0x5500
 #define BTHGN129  0x5D53
-#define BTHR968   0x5D60
-
 
 #define OREGON_SEND_BUFFER_SIZE 12
 
@@ -93,8 +88,6 @@ class Oregon_TM
     void setChannelTHP(byte);
     void setHumidityTHP(float);
 
-
-
   private:
 
     void sendZero(void);
@@ -105,21 +98,14 @@ class Oregon_TM
     void sendOregon();
     void sendPreamble();
     void calculateAndSetChecksum132();
-    void calculateAndSetChecksum318();
-    void calculateAndSetChecksum810();
-    void calculateAndSetChecksum968();
     void calculateAndSetChecksum129();
     void calculateAndSetChecksum132S();
-
-
-    void calculateAndSetChecksumTHP();
 
     unsigned long time_marker = 0;
     unsigned long time_marker_send = 0;
     unsigned long send_time = 0;
     bool prevbit = 1;
     bool prevstate = 1;
-
 
 };
 

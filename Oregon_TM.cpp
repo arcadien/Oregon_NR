@@ -293,43 +293,6 @@ void Oregon_TM::calculateAndSetChecksum129(void)
   SendBuffer[11] += crc & 0xF0;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Oregon_TM::calculateAndSetChecksum968(void)
-{
-  byte CCIT_POLY = 0x07;
-  SendBuffer[9] &= 0xF0;
-  SendBuffer[10] = 0x00;
-  SendBuffer[11] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0xA1;
-  byte cur_nible;
-  for (int i = 0; i < 10; i++)
-  {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
-    summ += cur_nible;
-    if (i != 3)
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-    cur_nible = SendBuffer[i] & 0x0F;
-    summ += cur_nible;
-    if (i != 2)
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-  }
-  SendBuffer[9] += summ & 0x0F;
-  SendBuffer[10] += summ & 0xF0;
-  SendBuffer[10] += crc & 0x0F;
-  SendBuffer[11] += crc & 0xF0;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -407,96 +370,17 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
   SendBuffer[7] += (crc & 0x0F) << 4;
   SendBuffer[7] += (crc & 0xF0) >> 4;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::calculateAndSetChecksum318()
-{
-  byte CCIT_POLY = 0x07;
-  SendBuffer[7] = SendBuffer[7] & 0xF0;
-  SendBuffer[8] = 0x00;
-  SendBuffer[9] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0x00;
-  byte cur_nible;
-  for (int i = 0; i < 8; i++)
-  {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
-    summ += cur_nible;
-    if (i != 3)
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-    cur_nible = SendBuffer[i] & 0x0F;
-    summ += cur_nible;
-    if (i != 2)
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-  }
-  SendBuffer[7] += summ & 0x0F;
-  SendBuffer[8] += summ & 0xF0;
-  SendBuffer[8] += crc & 0x0F;
-  SendBuffer[9] += crc & 0xF0;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Oregon_TM::calculateAndSetChecksum810()
-{
-  byte CCIT_POLY = 0x07;
-  SendBuffer[7] = SendBuffer[7] & 0xF0;
-  SendBuffer[8] = 0x00;
-  SendBuffer[9] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0x00;
-  byte cur_nible;
-  for (int i = 0; i < 8; i++)
-  {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
-    summ += cur_nible;
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-    cur_nible = SendBuffer[i] & 0x0F;
-    summ += cur_nible;
-    {
-      crc ^= cur_nible;
-      for (int j = 0; j < 4; j++)
-        if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-        else crc <<= 1;
-    }
-  }
-  SendBuffer[7] += summ & 0x0F;
-  SendBuffer[8] += summ & 0xF0;
-  SendBuffer[8] += crc & 0x0F;
-  SendBuffer[9] += crc & 0xF0;
-}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::SendPacket()
 {
-  if (sens_type == BTHR968)
-    calculateAndSetChecksum968();
   if (sens_type == BTHGN129)
     calculateAndSetChecksum129();
   if (sens_type == THGN132)
     calculateAndSetChecksum132();
   if (sens_type == THN132)
     calculateAndSetChecksum132S();
-  if (sens_type == RTGN318)
-    calculateAndSetChecksum318();
-  if (sens_type == THGR810)
-    calculateAndSetChecksum810();
-  if (sens_type == THP)
-    calculateAndSetChecksumTHP();
 
   sendOregon();
   digitalWrite(TX_PIN, LOW);
@@ -513,11 +397,6 @@ void Oregon_TM::SendPacket()
 void Oregon_TM::setType(word type)
 {
   sens_type = type;
-  if (type == THP)
-  {
-    SendBuffer[0] = 0x55;
-    return;
-  }
   SendBuffer[0] = (type & 0xFF00) >> 8;
   SendBuffer[1] = type & 0x00FF;
 }
@@ -526,13 +405,6 @@ void Oregon_TM::setType(word type)
 void Oregon_TM::setChannel(byte channel)
 {
   byte channel_code;
-
-  if (sens_type == BTHR968)
-  {
-    channel_code = 0x00;
-    setId(0xF0);
-    send_time = 40000;
-  }
 
   if (sens_type == THGN132)
   {
@@ -581,7 +453,7 @@ void Oregon_TM::setChannel(byte channel)
   }
 
 
-  if (sens_type == RTGN318 || sens_type == BTHGN129)
+  if (sens_type == BTHGN129)
   {
 
     if (channel <= 1)
@@ -619,65 +491,6 @@ void Oregon_TM::setChannel(byte channel)
     protocol = 2;
   }
 
-  if (sens_type == THGR810)
-  {
-    if (channel <= 1)
-    {
-      channel_code = 0x10;
-      setId(0xCB);
-      send_time = 53000;
-    }
-    if (channel == 2)
-    {
-      channel_code = 0x20;
-      setId(0x69);
-      send_time = 59000;
-    }
-    if (channel == 3)
-    {
-      channel_code = 0x30;
-      setId(0xAA);
-      send_time = 61000;
-    }
-    if (channel == 4)
-    {
-      channel_code = 0x40;
-      setId(0x8A);
-      send_time = 67000;
-    }
-    if (channel == 5)
-    {
-      channel_code = 0x50;
-      setId(0xB1);
-      send_time = 71000;
-    }
-    if (channel == 6)
-    {
-      channel_code = 0x60;
-      send_time = 79000;
-    }
-    if (channel == 7)
-    {
-      channel_code = 0x70;
-      send_time = 83000;
-    }
-    if (channel == 8)
-    {
-      channel_code = 0x80;
-      send_time = 87000;
-    }
-    if (channel == 9)
-    {
-      channel_code = 0x90;
-      send_time = 91000;
-    }
-    if (channel >= 10)
-    {
-      channel_code = 0xA0;
-      send_time = 93000;
-    }
-    protocol = 3;
-  }
   SendBuffer[2] &= 0x0F;
   SendBuffer[2] += channel_code & 0xF0;
 }
@@ -716,14 +529,6 @@ void Oregon_TM::setPressure(float mm_hg_pressure)
   //Ограничения датчика по даташиту
   // if (mm_hg_pressure < 450) pressure = 600;
   // if (mm_hg_pressure > 790) pressure = 1054;
-
-  if (sens_type == BTHR968)
-  {
-    pressure = (byte)(mm_hg_pressure-856);
-    SendBuffer[7] &= 0xF0;
-    SendBuffer[7] += pressure & 0x0F;
-    SendBuffer[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
-  }
 
   if (sens_type == BTHGN129)
   {
@@ -823,98 +628,3 @@ bool Oregon_TM::transmit()
   }
   else return false;
 }
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//Поддержка датчика THP
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-void Oregon_TM::setChannelTHP(byte channel)
-{
-  SendBuffer[1] &= 0x0F;
-  SendBuffer[1] += channel << 4;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setBatteryTHP( word bat_voltage)
-{
-  SendBuffer[6] = (bat_voltage & 0x0FF0) >> 4;
-  SendBuffer[7] &= 0x0F;
-  SendBuffer[7] += (bat_voltage & 0x000F) << 4;
-
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setTemperatureTHP(float bme_temperature)
-{
-  word temp_code;
-  if (bme_temperature < -100 || bme_temperature > 100) temp_code = 0x0FFF;
-  else temp_code = (word)((bme_temperature + 100) * 10);
-  SendBuffer[2] = temp_code & 0x00FF;
-  SendBuffer[1] &= 0xF0;
-  SendBuffer[1] += (temp_code & 0x0F00) >> 8;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setHumidityTHP(float bme_humidity)
-{
-  word hum_code;
-  if (bme_humidity > 100) hum_code = 0x0FFF;
-  else hum_code = (word)(bme_humidity * 10);
-  SendBuffer[3] = (hum_code & 0x0FF0) >> 4;
-  SendBuffer[4] &= 0x0F;
-  SendBuffer[4] += (hum_code & 0x000F) << 4;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setPressureTHP(float bme_pressure)
-{
-  word pres_code;
-  if (bme_pressure < 500) pres_code = 0x0000;
-  else pres_code = (word)((bme_pressure - 500) * 10);
-  SendBuffer[5] = pres_code & 0x00FF;
-  SendBuffer[4] &= 0xF0;
-  SendBuffer[4] += (pres_code & 0x0F00) >> 8;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setErrorTHP()
-{
-  SendBuffer[1] |= 0x0F;
-  SendBuffer[2] = 0xFF;
-  SendBuffer[3] = 0xFF;
-  SendBuffer[4] = 0xFF;
-  SendBuffer[5] = 0xFF;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::calculateAndSetChecksumTHP()
-{
-  byte CCIT_POLY = 0x07;
-  SendBuffer[7] = SendBuffer[7] & 0xF0;
-  SendBuffer[8] = 0x00;
-  SendBuffer[9] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0x00;
-  byte cur_nible;
-  for (int i = 0; i < 8; i++)
-  {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
-    summ += cur_nible;
-    crc ^= cur_nible;
-    for (int j = 0; j < 4; j++)
-      if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-      else crc <<= 1;
-
-    cur_nible = SendBuffer[i] & 0x0F;
-    summ += cur_nible;
-    crc ^= cur_nible;
-    for (int j = 0; j < 4; j++)
-      if (crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
-      else crc <<= 1;
-  }
-  SendBuffer[7] += summ & 0x0F;
-  SendBuffer[8] += summ & 0xF0;
-  SendBuffer[8] += crc & 0x0F;
-  SendBuffer[9] += crc & 0xF0;
-}
-
