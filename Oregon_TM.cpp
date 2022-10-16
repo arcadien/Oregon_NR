@@ -42,32 +42,18 @@
 
 //Конструктор
 
-Oregon_TM::Oregon_TM(uint8_t tr_pin, int buf_size)
+Oregon_TM::Oregon_TM(volatile uint8_t* rfPort, uint8_t rfPin, int nibbleCount)
 {
-  max_buffer_size = (int)(buf_size / 2) + 2;
+  this->rfPort = rfPort;
+  this->rfPin = rfPin;
+
+  max_buffer_size = (int)(nibbleCount / 2) + 2;
   SendBuffer = new uint8_t[max_buffer_size + 2];
-  TX_PIN = tr_pin;
-  pinMode(TX_PIN, OUTPUT);
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
 }
 Oregon_TM::~Oregon_TM()
 {
   delete SendBuffer;
-}
-
-Oregon_TM::Oregon_TM(uint8_t tr_pin)
-{
-  SendBuffer = new uint8_t[max_buffer_size + 2];
-  TX_PIN = tr_pin;
-  pinMode(TX_PIN, OUTPUT);
-  digitalWrite(TX_PIN, LOW);
-}
-
-Oregon_TM::Oregon_TM(void)
-{
-  SendBuffer = new uint8_t[max_buffer_size + 2];
-  pinMode(TX_PIN, OUTPUT);
-  digitalWrite(TX_PIN, LOW);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,11 +65,11 @@ void Oregon_TM::sendZero(void)
   while (time_marker + TR_TIME * 4 >= micros())
     ;
   time_marker += TR_TIME * 4;
-  digitalWrite(TX_PIN, HIGH);
+  rfHigh();
   _delay_us(TR_TIME - PULSE_SHORTEN_2);
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
   _delay_us(TWOTR_TIME + PULSE_SHORTEN_2);
-  digitalWrite(TX_PIN, HIGH);
+  rfHigh();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,11 +78,11 @@ void Oregon_TM::sendOne(void)
   while (time_marker + TR_TIME * 4 - PULSE_SHORTEN_2 >= micros())
     ;
   time_marker += TR_TIME * 4;
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
   _delay_us(TR_TIME + PULSE_SHORTEN_2);
-  digitalWrite(TX_PIN, HIGH);
+  rfHigh();
   _delay_us(TWOTR_TIME - PULSE_SHORTEN_2);
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -296,11 +282,11 @@ void Oregon_TM::SendPacket()
     calculateAndSetChecksum132S();
 
   sendOregon();
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
 
   _delay_us(TWOTR_TIME * 15);
   sendOregon();
-  digitalWrite(TX_PIN, LOW);
+  rfLow();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

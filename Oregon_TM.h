@@ -39,6 +39,8 @@
 // ВОЗНИКШИМ ИЗ-ЗА ИСПОЛЬЗОВАНИЯ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ ИЛИ ИНЫХ ДЕЙСТВИЙ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <avr/io.h>
+
 #define TR_TIME 488
 #define TWOTR_TIME 976
 #define PULSE_SHORTEN_2 93
@@ -61,9 +63,7 @@ public:
   uint16_t sens_type = 0x0000;
   int timing_corrector2 = 4;
 
-  Oregon_TM(uint8_t, int);
-  Oregon_TM(uint8_t);
-  Oregon_TM();
+  Oregon_TM(volatile uint8_t* rfPort, uint8_t rfPin, int nibblesCount);
   ~Oregon_TM();
   void setType(uint16_t);
   void setChannel(uint8_t);
@@ -77,12 +77,15 @@ public:
   void transmit();
   void SendPacket();
 
-  void setErrorTHP();
-  void setPressureTHP(float);
-  void setTemperatureTHP(float);
-  void setBatteryTHP(uint16_t);
-  void setChannelTHP(uint8_t);
-  void setHumidityTHP(float);
+  inline void rfHigh()
+  {
+    *rfPort |= (1 << rfPin);
+  }
+
+  inline void rfLow()
+  {
+    *rfPort &= ~(1 << rfPin);
+  }
 
 private:
   void sendZero(void);
@@ -101,7 +104,8 @@ private:
   bool prevbit = 1;
   bool prevstate = 1;
   uint8_t CCIT_POLY = 0x07;
-
+  volatile uint8_t *rfPort;
+  uint8_t rfPin;
 };
 
 #endif
