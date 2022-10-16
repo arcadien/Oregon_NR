@@ -41,70 +41,65 @@
 
 #define TR_TIME 488
 #define TWOTR_TIME 976
-#define PULSE_SHORTEN_2   93
-#define PULSE_SHORTEN_3   138
+#define PULSE_SHORTEN_2 93
+#define PULSE_SHORTEN_3 138
 
-#define THGN132   0x1D20
-#define THN132   0xEC40
-#define BTHGN129  0x5D53
+#define THGN132 0x1D20
+#define THN132 0xEC40
+#define BTHGN129 0x5D53
 
 #define OREGON_SEND_BUFFER_SIZE 12
 
-static byte TX_PIN = 4;
-
+static uint8_t TX_PIN = 4;
 
 class Oregon_TM
 {
-  public:
+public:
+  int max_buffer_size = OREGON_SEND_BUFFER_SIZE;
+  int buffer_size = 24;
+  uint8_t *SendBuffer;
+  uint16_t sens_type = 0x0000;
+  int timing_corrector2 = 4;
 
-    int max_buffer_size = OREGON_SEND_BUFFER_SIZE;
-    int  buffer_size = 24;
-    byte* SendBuffer;
-    word sens_type = 0x0000;
-    int timing_corrector2 = 4;
+  Oregon_TM(uint8_t, int);
+  Oregon_TM(uint8_t);
+  Oregon_TM();
+  ~Oregon_TM();
+  void setType(uint16_t);
+  void setChannel(uint8_t);
+  void setId(uint8_t);
+  void setBatteryFlag(bool);
+  void setStartCount(uint8_t);
+  void setTemperature(float);
+  void setHumidity(uint8_t);
+  void setComfort(float, uint8_t);
+  void setPressure(float);
+  bool transmit();
+  void SendPacket();
 
-    Oregon_TM(byte, int);
-    Oregon_TM(byte);
-    Oregon_TM();
-    ~Oregon_TM();
-    void setType(word);
-    void setChannel( byte);
-    void setId(byte);
-    void setBatteryFlag(bool);
-    void setStartCount(byte);
-    void setTemperature(float);
-    void setHumidity(byte);
-    void setComfort(float, byte);
-    void setPressure(float);
-    bool transmit();
-    void SendPacket();
+  void setErrorTHP();
+  void setPressureTHP(float);
+  void setTemperatureTHP(float);
+  void setBatteryTHP(uint16_t);
+  void setChannelTHP(uint8_t);
+  void setHumidityTHP(float);
 
-    void setErrorTHP();
-    void setPressureTHP(float);
-    void setTemperatureTHP(float);
-    void setBatteryTHP(word);
-    void setChannelTHP(byte);
-    void setHumidityTHP(float);
+private:
+  void sendZero(void);
+  void sendOne(void);
+  void sendMSB(const uint8_t);
+  void sendLSB(const uint8_t);
+  void sendData();
+  void sendOregon();
+  void sendPreamble();
+  void calculateAndSetChecksum132();
+  void calculateAndSetChecksum129();
+  void calculateAndSetChecksum132S();
 
-  private:
-
-    void sendZero(void);
-    void sendOne(void);
-    void sendMSB(const byte);
-    void sendLSB(const byte);
-    void sendData();
-    void sendOregon();
-    void sendPreamble();
-    void calculateAndSetChecksum132();
-    void calculateAndSetChecksum129();
-    void calculateAndSetChecksum132S();
-
-    unsigned long time_marker = 0;
-    unsigned long time_marker_send = 0;
-    bool prevbit = 1;
-    bool prevstate = 1;
-
+  unsigned long time_marker = 0;
+  unsigned long time_marker_send = 0;
+  bool prevbit = 1;
+  bool prevstate = 1;
 };
 
 #endif
-

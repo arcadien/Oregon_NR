@@ -42,10 +42,10 @@
 
 //Конструктор
 
-Oregon_TM::Oregon_TM(byte tr_pin, int buf_size)
+Oregon_TM::Oregon_TM(uint8_t tr_pin, int buf_size)
 {
   max_buffer_size = (int)(buf_size / 2) + 2;
-  SendBuffer = new byte[max_buffer_size + 2];
+  SendBuffer = new uint8_t[max_buffer_size + 2];
   TX_PIN = tr_pin;
   pinMode(TX_PIN, OUTPUT);
   digitalWrite(TX_PIN, LOW);
@@ -55,9 +55,9 @@ Oregon_TM::~Oregon_TM()
   delete SendBuffer;
 }
 
-Oregon_TM::Oregon_TM(byte tr_pin)
+Oregon_TM::Oregon_TM(uint8_t tr_pin)
 {
-  SendBuffer = new byte[max_buffer_size + 2];
+  SendBuffer = new uint8_t[max_buffer_size + 2];
   TX_PIN = tr_pin;
   pinMode(TX_PIN, OUTPUT);
   digitalWrite(TX_PIN, LOW);
@@ -65,7 +65,7 @@ Oregon_TM::Oregon_TM(byte tr_pin)
 
 Oregon_TM::Oregon_TM(void)
 {
-  SendBuffer = new byte[max_buffer_size + 2];
+  SendBuffer = new uint8_t[max_buffer_size + 2];
   pinMode(TX_PIN, OUTPUT);
   digitalWrite(TX_PIN, LOW);
 }
@@ -100,7 +100,7 @@ void Oregon_TM::sendOne(void)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::sendMSB(byte data)
+void Oregon_TM::sendMSB(uint8_t data)
 {
   (bitRead(data, 4)) ? sendOne() : sendZero();
   (bitRead(data, 5)) ? sendOne() : sendZero();
@@ -110,7 +110,7 @@ void Oregon_TM::sendMSB(byte data)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::sendLSB(byte data)
+void Oregon_TM::sendLSB(uint8_t data)
 {
   (bitRead(data, 0)) ? sendOne() : sendZero();
   (bitRead(data, 1)) ? sendOne() : sendZero();
@@ -123,7 +123,7 @@ void Oregon_TM::sendLSB(byte data)
 void Oregon_TM::sendData()
 {
   int q = 0;
-  for (byte i = 0; i < max_buffer_size; i++)
+  for (uint8_t i = 0; i < max_buffer_size; i++)
   {
     sendMSB(SendBuffer[i]);
     q++;
@@ -162,13 +162,13 @@ void Oregon_TM::sendPreamble(void)
 
 void Oregon_TM::calculateAndSetChecksum129(void)
 {
-  byte CCIT_POLY = 0x07;
+  uint8_t CCIT_POLY = 0x07;
   SendBuffer[9] &= 0xF0;
   SendBuffer[10] = 0x00;
   SendBuffer[11] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0x00;
-  byte cur_nible;
+  uint8_t summ = 0x00;
+  uint8_t crc = 0x00;
+  uint8_t cur_nible;
   for (int i = 0; i < 10; i++)
   {
     cur_nible = (SendBuffer[i] & 0xF0) >> 4;
@@ -204,13 +204,13 @@ void Oregon_TM::calculateAndSetChecksum129(void)
 
 void Oregon_TM::calculateAndSetChecksum132(void)
 {
-  byte CCIT_POLY = 0x07;
+  uint8_t CCIT_POLY = 0x07;
   SendBuffer[7] &= 0xF0;
   SendBuffer[8] = 0x00;
   SendBuffer[9] = 0x00;
-  byte summ = 0x00;
-  byte crc = 0x3C;
-  byte cur_nible;
+  uint8_t summ = 0x00;
+  uint8_t crc = 0x3C;
+  uint8_t cur_nible;
   for (int i = 0; i < 8; i++)
   {
     cur_nible = (SendBuffer[i] & 0xF0) >> 4;
@@ -245,11 +245,11 @@ void Oregon_TM::calculateAndSetChecksum132(void)
 
 void Oregon_TM::calculateAndSetChecksum132S(void)
 {
-  byte CCIT_POLY = 0x07;
-  byte summ = 0x00;
-  byte crc = 0xD6;
+  uint8_t CCIT_POLY = 0x07;
+  uint8_t summ = 0x00;
+  uint8_t crc = 0xD6;
   SendBuffer[6] = SendBuffer[7] = 0x00;
-  byte cur_nible;
+  uint8_t cur_nible;
   for (int i = 0; i < 6; i++)
   {
     cur_nible = (SendBuffer[i] & 0xF0) >> 4;
@@ -309,7 +309,7 @@ void Oregon_TM::SendPacket()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Функции кодирования данных//////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void Oregon_TM::setType(word type)
+void Oregon_TM::setType(uint16_t type)
 {
   sens_type = type;
   SendBuffer[0] = (type & 0xFF00) >> 8;
@@ -317,14 +317,14 @@ void Oregon_TM::setType(word type)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::setChannel(byte channel)
+void Oregon_TM::setChannel(uint8_t channel)
 {
   SendBuffer[2] &= 0x0F;
   SendBuffer[2] += (channel << 4) & 0xF0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::setId(byte ID)
+void Oregon_TM::setId(uint8_t ID)
 {
   SendBuffer[2] &= 0xF0;
   SendBuffer[2] += (ID & 0xF0) >> 4;
@@ -341,7 +341,7 @@ void Oregon_TM::setBatteryFlag(bool level)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::setStartCount(byte startcount)
+void Oregon_TM::setStartCount(uint8_t startcount)
 {
   SendBuffer[3] &= 0xF4;
   if (startcount == 8)
@@ -356,7 +356,7 @@ void Oregon_TM::setStartCount(byte startcount)
 
 void Oregon_TM::setPressure(float mm_hg_pressure)
 {
-  byte pressure;
+  uint8_t pressure;
 
   //Ограничения датчика по даташиту
   // if (mm_hg_pressure < 450) pressure = 600;
@@ -364,7 +364,7 @@ void Oregon_TM::setPressure(float mm_hg_pressure)
 
   if (sens_type == BTHGN129)
   {
-    pressure = (byte)(mm_hg_pressure - 795);
+    pressure = (uint8_t)(mm_hg_pressure - 795);
     SendBuffer[7] &= 0xF0;
     SendBuffer[7] += pressure & 0x0F;
     SendBuffer[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
@@ -404,10 +404,10 @@ void Oregon_TM::setTemperature(float temp)
   {
     SendBuffer[5] = 0x00;
   }
-  byte tempInt = (byte)temp;
-  byte td = (tempInt / 10);
-  byte tf = tempInt - td * 10;
-  byte tempFloat = (temp - (float)tempInt) * 10;
+  uint8_t tempInt = (uint8_t)temp;
+  uint8_t td = (tempInt / 10);
+  uint8_t tf = tempInt - td * 10;
+  uint8_t tempFloat = (temp - (float)tempInt) * 10;
 
   SendBuffer[5] += (td << 4);
   SendBuffer[4] = tf;
@@ -415,7 +415,7 @@ void Oregon_TM::setTemperature(float temp)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::setHumidity(byte hum)
+void Oregon_TM::setHumidity(uint8_t hum)
 {
   if (sens_type != THN132)
   {
@@ -425,7 +425,7 @@ void Oregon_TM::setHumidity(byte hum)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::setComfort(float temp, byte hum)
+void Oregon_TM::setComfort(float temp, uint8_t hum)
 {
   if (sens_type != THN132)
   {
