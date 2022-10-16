@@ -1,5 +1,7 @@
 #include "Oregon_TM.h"
 
+#include <util/delay.h>
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This file is part of the Arduino OREGON_NR library.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,9 +84,9 @@ void Oregon_TM::sendZero(void)
     while (time_marker + TR_TIME * 4 >= micros());
     time_marker += TR_TIME * 4;
     digitalWrite(TX_PIN, HIGH);
-    delayMicroseconds(TR_TIME - PULSE_SHORTEN_2);
+    _delay_us(TR_TIME - PULSE_SHORTEN_2);
     digitalWrite(TX_PIN, LOW);
-    delayMicroseconds(TWOTR_TIME + PULSE_SHORTEN_2);
+    _delay_us(TWOTR_TIME + PULSE_SHORTEN_2);
     digitalWrite(TX_PIN, HIGH);
   }
   if (protocol == 3)
@@ -104,7 +106,7 @@ void Oregon_TM::sendZero(void)
     if (prevbit && !prevstate)
     {
       digitalWrite(TX_PIN, HIGH);
-      delayMicroseconds(TWOTR_TIME);
+      _delay_us(TWOTR_TIME);
       prevstate = 1;
       prevbit = 0;
       return;
@@ -112,7 +114,7 @@ void Oregon_TM::sendZero(void)
     if (!prevbit && prevstate)
     {
       digitalWrite(TX_PIN, LOW);
-      delayMicroseconds(TR_TIME);
+      _delay_us(TR_TIME);
       digitalWrite(TX_PIN, HIGH);
       prevbit = 0;
       return;
@@ -120,7 +122,7 @@ void Oregon_TM::sendZero(void)
     if (!prevbit && !prevstate)
     {
       digitalWrite(TX_PIN, HIGH);
-      delayMicroseconds(TR_TIME);
+      _delay_us(TR_TIME);
       digitalWrite(TX_PIN, LOW);
       prevbit = 0;
       return;
@@ -135,9 +137,9 @@ void Oregon_TM::sendOne(void)
     while (time_marker + TR_TIME * 4 - PULSE_SHORTEN_2 >= micros());
     time_marker += TR_TIME * 4;
     digitalWrite(TX_PIN, LOW);
-    delayMicroseconds(TR_TIME + PULSE_SHORTEN_2);
+    _delay_us(TR_TIME + PULSE_SHORTEN_2);
     digitalWrite(TX_PIN, HIGH);
-    delayMicroseconds(TWOTR_TIME - PULSE_SHORTEN_2);
+    _delay_us(TWOTR_TIME - PULSE_SHORTEN_2);
     digitalWrite(TX_PIN, LOW);
   }
 
@@ -164,7 +166,7 @@ void Oregon_TM::sendOne(void)
     if (prevbit && prevstate)
     {
       digitalWrite(TX_PIN, LOW);
-      delayMicroseconds(TR_TIME);
+      _delay_us(TR_TIME);
       digitalWrite(TX_PIN, HIGH);
       prevbit = 1;
       return;
@@ -172,7 +174,7 @@ void Oregon_TM::sendOne(void)
     if (prevbit && !prevstate)
     {
       digitalWrite(TX_PIN, HIGH);
-      delayMicroseconds(TR_TIME);
+      _delay_us(TR_TIME);
       digitalWrite(TX_PIN, LOW);
       prevbit = 1;
       return;
@@ -385,7 +387,7 @@ void Oregon_TM::SendPacket()
   sendOregon();
   digitalWrite(TX_PIN, LOW);
   if (protocol == 2) {
-    delayMicroseconds(TWOTR_TIME * 15);
+    _delay_us(TWOTR_TIME * 15);
     sendOregon();
     digitalWrite(TX_PIN, LOW);
   }
