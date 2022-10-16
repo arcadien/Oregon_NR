@@ -74,7 +74,7 @@ public:
   void setHumidity(uint8_t);
   void setComfort(float, uint8_t);
   void setPressure(float);
-  bool transmit();
+  void transmit();
   void SendPacket();
 
   void setErrorTHP();
@@ -100,6 +100,8 @@ private:
   unsigned long time_marker_send = 0;
   bool prevbit = 1;
   bool prevstate = 1;
+  uint8_t CCIT_POLY = 0x07;
+
 };
 
 #endif

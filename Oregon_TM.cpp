@@ -162,7 +162,6 @@ void Oregon_TM::sendPreamble(void)
 
 void Oregon_TM::calculateAndSetChecksum129(void)
 {
-  uint8_t CCIT_POLY = 0x07;
   SendBuffer[9] &= 0xF0;
   SendBuffer[10] = 0x00;
   SendBuffer[11] = 0x00;
@@ -204,7 +203,6 @@ void Oregon_TM::calculateAndSetChecksum129(void)
 
 void Oregon_TM::calculateAndSetChecksum132(void)
 {
-  uint8_t CCIT_POLY = 0x07;
   SendBuffer[7] &= 0xF0;
   SendBuffer[8] = 0x00;
   SendBuffer[9] = 0x00;
@@ -245,7 +243,6 @@ void Oregon_TM::calculateAndSetChecksum132(void)
 
 void Oregon_TM::calculateAndSetChecksum132S(void)
 {
-  uint8_t CCIT_POLY = 0x07;
   uint8_t summ = 0x00;
   uint8_t crc = 0xD6;
   SendBuffer[6] = SendBuffer[7] = 0x00;
@@ -451,10 +448,7 @@ void Oregon_TM::setComfort(float temp, uint8_t hum)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Oregon_TM::transmit()
+void Oregon_TM::transmit()
 {
-  
     SendPacket();
-    return true;
- 
 }
