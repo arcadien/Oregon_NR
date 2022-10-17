@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #ifndef Oregon_TM_h
 #define Oregon_TM_h
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +38,11 @@
 // ВОЗНИКШИМ ИЗ-ЗА ИСПОЛЬЗОВАНИЯ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ ИЛИ ИНЫХ ДЕЙСТВИЙ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <avr/io.h>
+#include <stdint.h>
+
+#if defined(ARDUINO)
+#include <Arduino.h>
+#endif
 
 #define TR_TIME 488
 #define TWOTR_TIME 976
@@ -52,18 +55,75 @@
 
 #define OREGON_SEND_BUFFER_SIZE 12
 
-static uint8_t TX_PIN = 4;
+class TimeMarkerBase
+{
+public:
+  TimeMarkerBase()
+  {
+    _value = 0;
+  }
 
+  virtual void reset() = 0;
+  void increment(unsigned long value)
+  {
+    _value += value;
+  }
+  virtual void wait(unsigned long future) = 0;
+
+protected:
+  unsigned long _value;
+};
+
+#if defined(ARDUINO)
+class ArduinoTimeMarker : public TimeMarkerBase
+{
+public:
+  inline void reset() override
+  {
+    _value = micros();
+  }
+
+  inline void wait(unsigned long future) override
+  {
+    while (_value + future >= micros())
+    {
+    }
+  }
+};
+class TimeMarker : public ArduinoTimeMarker
+{
+};
+
+#else
+
+class OneMhzClockTimeMarker : public TimeMarkerBase
+{
+public:
+  inline void reset() override
+  {
+    _value = 0;
+  }
+
+  // Fixme how many clocks here
+  inline void wait(unsigned long future) override
+  {
+    unsigned long last = _value + future;
+    while (last > 0)
+    {
+      last--; // 1 clock == 1µs ??
+    }
+    _value = 0;
+  }
+};
+class TimeMarker : public OneMhzClockTimeMarker
+{
+};
+#endif
 class Oregon_TM
 {
 public:
-  int max_buffer_size = OREGON_SEND_BUFFER_SIZE;
-  int buffer_size = 24;
-  uint8_t *SendBuffer;
-  uint16_t sens_type = 0x0000;
-  int timing_corrector2 = 4;
 
-  Oregon_TM(volatile uint8_t* rfPort, uint8_t rfPin, int nibblesCount);
+  Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibblesCount);
   ~Oregon_TM();
   void setType(uint16_t);
   void setChannel(uint8_t);
@@ -75,7 +135,6 @@ public:
   void setComfort(float, uint8_t);
   void setPressure(float);
   void transmit();
-  void SendPacket();
 
   inline void rfHigh()
   {
@@ -86,6 +145,9 @@ public:
   {
     *rfPort &= ~(1 << rfPin);
   }
+  
+  uint8_t buffer_size = 24;
+  uint8_t *SendBuffer;
 
 private:
   void sendZero(void);
@@ -99,10 +161,10 @@ private:
   void calculateAndSetChecksum129();
   void calculateAndSetChecksum132S();
 
-  unsigned long time_marker = 0;
-  unsigned long time_marker_send = 0;
-  bool prevbit = 1;
-  bool prevstate = 1;
+  TimeMarker timeMarker;
+  uint8_t max_buffer_size = OREGON_SEND_BUFFER_SIZE;
+  uint16_t sens_type = 0x0000;
+  uint8_t timing_corrector2 = 4;
   uint8_t CCIT_POLY = 0x07;
   volatile uint8_t *rfPort;
   uint8_t rfPin;

@@ -41,13 +41,16 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Конструктор
+#include <Arduino.h>
 
-Oregon_TM::Oregon_TM(volatile uint8_t* rfPort, uint8_t rfPin, int nibbleCount)
+#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+
+Oregon_TM::Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibbleCount)
 {
   this->rfPort = rfPort;
   this->rfPin = rfPin;
 
-  max_buffer_size = (int)(nibbleCount / 2) + 2;
+  max_buffer_size = (uint8_t)(nibbleCount / 2) + 2;
   SendBuffer = new uint8_t[max_buffer_size + 2];
   rfLow();
 }
@@ -62,9 +65,8 @@ Oregon_TM::~Oregon_TM()
 void Oregon_TM::sendZero(void)
 {
 
-  while (time_marker + TR_TIME * 4 >= micros())
-    ;
-  time_marker += TR_TIME * 4;
+  timeMarker.wait(TR_TIME * 4);
+  timeMarker.increment(TR_TIME * 4);
   rfHigh();
   _delay_us(TR_TIME - PULSE_SHORTEN_2);
   rfLow();
@@ -75,9 +77,8 @@ void Oregon_TM::sendZero(void)
 
 void Oregon_TM::sendOne(void)
 {
-  while (time_marker + TR_TIME * 4 - PULSE_SHORTEN_2 >= micros())
-    ;
-  time_marker += TR_TIME * 4;
+  timeMarker.wait(TR_TIME * 4 - PULSE_SHORTEN_2);
+  timeMarker.increment(TR_TIME * 4);
   rfLow();
   _delay_us(TR_TIME + PULSE_SHORTEN_2);
   rfHigh();
@@ -92,7 +93,9 @@ void Oregon_TM::sendMSB(uint8_t data)
   (bitRead(data, 5)) ? sendOne() : sendZero();
   (bitRead(data, 6)) ? sendOne() : sendZero();
   (bitRead(data, 7)) ? sendOne() : sendZero();
-  time_marker += timing_corrector2; //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
+
+  // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
+  timeMarker.increment(timing_corrector2);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -102,7 +105,9 @@ void Oregon_TM::sendLSB(uint8_t data)
   (bitRead(data, 1)) ? sendOne() : sendZero();
   (bitRead(data, 2)) ? sendOne() : sendZero();
   (bitRead(data, 3)) ? sendOne() : sendZero();
-  time_marker += timing_corrector2; //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
+
+  // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
+  timeMarker.increment(timing_corrector2);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -119,15 +124,16 @@ void Oregon_TM::sendData()
     q++;
     if (q >= buffer_size)
       break;
-    time_marker += 4; //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
-    //Поправка на разницу тактовых частот 1024.07Гц и 1024Гц
+
+    // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
+    timeMarker.increment(4);
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::sendOregon()
 {
-  time_marker = micros();
+  timeMarker.reset();
   sendPreamble();
   sendLSB(0xA);
   sendData();
@@ -139,10 +145,10 @@ void Oregon_TM::sendPreamble(void)
 {
   sendLSB(0xF);
   sendLSB(0xF);
-  time_marker += 9;
+  timeMarker.increment(9);
   sendLSB(0xF);
   sendLSB(0xF);
-  time_marker += 9;
+  timeMarker.increment(9);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -272,7 +278,7 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Oregon_TM::SendPacket()
+void Oregon_TM::transmit()
 {
   if (sens_type == BTHGN129)
     calculateAndSetChecksum129();
@@ -340,10 +346,6 @@ void Oregon_TM::setStartCount(uint8_t startcount)
 void Oregon_TM::setPressure(float mm_hg_pressure)
 {
   uint8_t pressure;
-
-  //Ограничения датчика по даташиту
-  // if (mm_hg_pressure < 450) pressure = 600;
-  // if (mm_hg_pressure > 790) pressure = 1054;
 
   if (sens_type == BTHGN129)
   {
@@ -431,10 +433,4 @@ void Oregon_TM::setComfort(float temp, uint8_t hum)
       SendBuffer[7] = 0x00;
     return;
   }
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Oregon_TM::transmit()
-{
-    SendPacket();
 }
