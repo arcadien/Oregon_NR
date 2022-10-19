@@ -51,17 +51,12 @@ Oregon_TM::Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibbleCoun
   this->rfPin = rfPin;
 
   buffer_size = (uint8_t)(nibbleCount / 2) + 2;
-  SendBuffer = new uint8_t[buffer_size + 2];
 
   sens_type = 0x0000;
   timing_corrector2 = 4;
   CCIT_POLY = 0x07;
 
   rfLow();
-}
-Oregon_TM::~Oregon_TM()
-{
-  delete SendBuffer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,17 +127,10 @@ void Oregon_TM::sendLSB(uint8_t data)
 
 void Oregon_TM::sendData()
 {
-  int q = 0;
   for (uint8_t i = 0; i < buffer_size; i++)
   {
     sendMSB(SendBuffer[i]);
-    q++;
-    if (q >= buffer_size)
-      break;
     sendLSB(SendBuffer[i]);
-    q++;
-    if (q >= buffer_size)
-      break;
 
 // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
 #if not defined(__AVR_ATtiny84__)

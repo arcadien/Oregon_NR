@@ -125,7 +125,6 @@ class Oregon_TM
 {
 public:
 	Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibblesCount);
-	~Oregon_TM();
 	void setType(uint16_t);
 	void setChannel(uint8_t);
 	void setId(uint8_t);
@@ -166,7 +165,7 @@ private:
 #endif
 
 	uint8_t buffer_size;
-	uint8_t *SendBuffer;
+	uint8_t SendBuffer[16];
 	uint16_t sens_type;
 	uint8_t timing_corrector2;
 	uint8_t CCIT_POLY;
