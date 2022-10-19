@@ -50,8 +50,13 @@ Oregon_TM::Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibbleCoun
   this->rfPort = rfPort;
   this->rfPin = rfPin;
 
-  max_buffer_size = (uint8_t)(nibbleCount / 2) + 2;
-  SendBuffer = new uint8_t[max_buffer_size + 2];
+  buffer_size = (uint8_t)(nibbleCount / 2) + 2;
+  SendBuffer = new uint8_t[buffer_size + 2];
+
+  sens_type = 0x0000;
+  timing_corrector2 = 4;
+  CCIT_POLY = 0x07;
+
   rfLow();
 }
 Oregon_TM::~Oregon_TM()
@@ -64,26 +69,36 @@ Oregon_TM::~Oregon_TM()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void Oregon_TM::sendZero(void)
 {
-
+#if not defined(__AVR_ATtiny84__)
   timeMarker.wait(TR_TIME * 4);
   timeMarker.increment(TR_TIME * 4);
+#endif
   rfHigh();
   _delay_us(TR_TIME - PULSE_SHORTEN_2);
   rfLow();
   _delay_us(TWOTR_TIME + PULSE_SHORTEN_2);
   rfHigh();
+
+#if defined(__AVR_ATtiny84__)
+  _delay_us(TR_TIME);
+#endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::sendOne(void)
 {
+#if not defined(__AVR_ATtiny84__)
   timeMarker.wait(TR_TIME * 4 - PULSE_SHORTEN_2);
   timeMarker.increment(TR_TIME * 4);
+#endif
   rfLow();
   _delay_us(TR_TIME + PULSE_SHORTEN_2);
   rfHigh();
   _delay_us(TWOTR_TIME - PULSE_SHORTEN_2);
   rfLow();
+#if defined(__AVR_ATtiny84__)
+  _delay_us(TR_TIME);
+#endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,8 +109,10 @@ void Oregon_TM::sendMSB(uint8_t data)
   (bitRead(data, 6)) ? sendOne() : sendZero();
   (bitRead(data, 7)) ? sendOne() : sendZero();
 
+#if not defined(__AVR_ATtiny84__)
   // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
   timeMarker.increment(timing_corrector2);
+#endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -106,15 +123,17 @@ void Oregon_TM::sendLSB(uint8_t data)
   (bitRead(data, 2)) ? sendOne() : sendZero();
   (bitRead(data, 3)) ? sendOne() : sendZero();
 
+#if not defined(__AVR_ATtiny84__)
   // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
   timeMarker.increment(timing_corrector2);
+#endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::sendData()
 {
   int q = 0;
-  for (uint8_t i = 0; i < max_buffer_size; i++)
+  for (uint8_t i = 0; i < buffer_size; i++)
   {
     sendMSB(SendBuffer[i]);
     q++;
@@ -125,15 +144,19 @@ void Oregon_TM::sendData()
     if (q >= buffer_size)
       break;
 
-    // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
+// Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
+#if not defined(__AVR_ATtiny84__)
     timeMarker.increment(4);
+#endif
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::sendOregon()
 {
+#if not defined(__AVR_ATtiny84__)
   timeMarker.reset();
+#endif
   sendPreamble();
   sendLSB(0xA);
   sendData();
@@ -145,10 +168,14 @@ void Oregon_TM::sendPreamble(void)
 {
   sendLSB(0xF);
   sendLSB(0xF);
+#if not defined(__AVR_ATtiny84__)
   timeMarker.increment(9);
+#endif
   sendLSB(0xF);
   sendLSB(0xF);
+#if not defined(__AVR_ATtiny84__)
   timeMarker.increment(9);
+#endif
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

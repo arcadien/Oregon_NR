@@ -42,10 +42,12 @@
 
 #if defined(ARDUINO)
 #include <Arduino.h>
+#else
+#include <util/delay.h>
 #endif
 
-#define TR_TIME 488
-#define TWOTR_TIME 976
+#define TR_TIME 512
+#define TWOTR_TIME 1024
 #define PULSE_SHORTEN_2 93
 #define PULSE_SHORTEN_3 138
 
@@ -53,42 +55,42 @@
 #define THN132 0xEC40
 #define BTHGN129 0x5D53
 
-#define OREGON_SEND_BUFFER_SIZE 12
+#define OREGON_SEND_BUFFER_SIZE 24
 
 class TimeMarkerBase
 {
 public:
-  TimeMarkerBase()
-  {
-    _value = 0;
-  }
+	TimeMarkerBase()
+	{
+		_value = 0;
+	}
 
-  virtual void reset() = 0;
-  void increment(unsigned long value)
-  {
-    _value += value;
-  }
-  virtual void wait(unsigned long future) = 0;
+	virtual void reset() = 0;
+	void increment(unsigned long value)
+	{
+		_value += value;
+	}
+	virtual void wait(unsigned long future) = 0;
 
 protected:
-  unsigned long _value;
+	unsigned long _value;
 };
 
 #if defined(ARDUINO)
 class ArduinoTimeMarker : public TimeMarkerBase
 {
 public:
-  inline void reset() override
-  {
-    _value = micros();
-  }
+	inline void reset() override
+	{
+		_value = micros();
+	}
 
-  inline void wait(unsigned long future) override
-  {
-    while (_value + future >= micros())
-    {
-    }
-  }
+	inline void wait(unsigned long future) override
+	{
+		while (_value + future >= micros())
+		{
+		}
+	}
 };
 class TimeMarker : public ArduinoTimeMarker
 {
@@ -99,21 +101,21 @@ class TimeMarker : public ArduinoTimeMarker
 class OneMhzClockTimeMarker : public TimeMarkerBase
 {
 public:
-  inline void reset() override
-  {
-    _value = 0;
-  }
+	inline void reset() override
+	{
+		_value = 0;
+	}
 
-  // Fixme how many clocks here
-  inline void wait(unsigned long future) override
-  {
-    unsigned long last = _value + future;
-    while (last > 0)
-    {
-      last--; // 1 clock == 1µs ??
-    }
-    _value = 0;
-  }
+	// Fixme how many clocks here
+	inline void wait(unsigned long future) override
+	{
+		// unsigned long last = (unsigned long)((_value + future) / 30);
+		// for (; last >=x 0; last--)
+		// {
+		// 	_delay_us(30);
+		// }
+		// _value = 0;
+	}
 };
 class TimeMarker : public OneMhzClockTimeMarker
 {
@@ -122,52 +124,54 @@ class TimeMarker : public OneMhzClockTimeMarker
 class Oregon_TM
 {
 public:
+	Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibblesCount);
+	~Oregon_TM();
+	void setType(uint16_t);
+	void setChannel(uint8_t);
+	void setId(uint8_t);
+	void setBatteryFlag(bool);
+	void setStartCount(uint8_t);
+	void setTemperature(float);
+	void setHumidity(uint8_t);
+	void setComfort(float, uint8_t);
+	void setPressure(float);
+	void transmit();
 
-  Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibblesCount);
-  ~Oregon_TM();
-  void setType(uint16_t);
-  void setChannel(uint8_t);
-  void setId(uint8_t);
-  void setBatteryFlag(bool);
-  void setStartCount(uint8_t);
-  void setTemperature(float);
-  void setHumidity(uint8_t);
-  void setComfort(float, uint8_t);
-  void setPressure(float);
-  void transmit();
+	inline void rfHigh()
+	{
+		*rfPort |= (1 << rfPin);
+	}
 
-  inline void rfHigh()
-  {
-    *rfPort |= (1 << rfPin);
-  }
-
-  inline void rfLow()
-  {
-    *rfPort &= ~(1 << rfPin);
-  }
-  
-  uint8_t buffer_size = 24;
-  uint8_t *SendBuffer;
+	inline void rfLow()
+	{
+		*rfPort &= ~(1 << rfPin);
+	}
 
 private:
-  void sendZero(void);
-  void sendOne(void);
-  void sendMSB(const uint8_t);
-  void sendLSB(const uint8_t);
-  void sendData();
-  void sendOregon();
-  void sendPreamble();
-  void calculateAndSetChecksum132();
-  void calculateAndSetChecksum129();
-  void calculateAndSetChecksum132S();
+	void sendZero(void);
+	void sendOne(void);
+	void sendMSB(const uint8_t);
+	void sendLSB(const uint8_t);
+	void sendData();
+	void sendOregon();
+	void sendPreamble();
+	void calculateAndSetChecksum132();
+	void calculateAndSetChecksum129();
+	void calculateAndSetChecksum132S();
 
-  TimeMarker timeMarker;
-  uint8_t max_buffer_size = OREGON_SEND_BUFFER_SIZE;
-  uint16_t sens_type = 0x0000;
-  uint8_t timing_corrector2 = 4;
-  uint8_t CCIT_POLY = 0x07;
-  volatile uint8_t *rfPort;
-  uint8_t rfPin;
+// ATTiny84 is too slow for advanced
+// timing optimisation
+#if not defined(__AVR_ATtiny84__)
+	TimeMarker timeMarker;
+#endif
+
+	uint8_t buffer_size;
+	uint8_t *SendBuffer;
+	uint16_t sens_type;
+	uint8_t timing_corrector2;
+	uint8_t CCIT_POLY;
+	volatile uint8_t *rfPort;
+	uint8_t rfPin;
 };
 
 #endif
