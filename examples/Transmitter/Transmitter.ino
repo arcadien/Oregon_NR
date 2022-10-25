@@ -72,11 +72,11 @@ void loop()
 {
     //передача осуществляется по таймеру, который определяется типом датчика и номером канала
     
-    if (transmitter.transmit()) PrintSentData(transmitter.SendBuffer, transmitter.buffer_size);
-    if (transmitter2.transmit()) PrintSentData(transmitter2.SendBuffer, transmitter2.buffer_size);
-    if (transmitter3.transmit()) PrintSentData(transmitter3.SendBuffer, transmitter3.buffer_size);
-    if (transmitter4.transmit()) PrintSentData(transmitter4.SendBuffer, transmitter4.buffer_size);
-    if (transmitter5.transmit()) PrintSentData(transmitter5.SendBuffer, transmitter5.buffer_size);
+    if (transmitter.transmit()) PrintSentData(transmitter.sendBuffer, transmitter.buffer_size);
+    if (transmitter2.transmit()) PrintSentData(transmitter2.sendBuffer, transmitter2.buffer_size);
+    if (transmitter3.transmit()) PrintSentData(transmitter3.sendBuffer, transmitter3.buffer_size);
+    if (transmitter4.transmit()) PrintSentData(transmitter4.sendBuffer, transmitter4.buffer_size);
+    if (transmitter5.transmit()) PrintSentData(transmitter5.sendBuffer, transmitter5.buffer_size);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

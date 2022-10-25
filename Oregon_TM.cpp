@@ -49,7 +49,7 @@ Oregon_TM::Oregon_TM(volatile uint8_t *rfPort, uint8_t rfPin, uint8_t nibbleCoun
 {
   this->rfPort = rfPort;
   this->rfPin = rfPin;
-
+  memset(this->sendBuffer, 0, OREGON_BUFFER_MAX_SIZE_IN_BYTES);
   buffer_size = (uint8_t)(nibbleCount / 2) + 2;
 
   sens_type = 0x0000;
@@ -129,8 +129,8 @@ void Oregon_TM::sendData()
 {
   for (uint8_t i = 0; i < buffer_size; i++)
   {
-    sendMSB(SendBuffer[i]);
-    sendLSB(SendBuffer[i]);
+    sendMSB(sendBuffer[i]);
+    sendLSB(sendBuffer[i]);
 
 // Correction for the difference in clock frequencies 1024.07Hz and 1024.60Hz
 #if not defined(__AVR_ATtiny84__)
@@ -169,15 +169,15 @@ void Oregon_TM::sendPreamble(void)
 
 void Oregon_TM::calculateAndSetChecksum129(void)
 {
-  SendBuffer[9] &= 0xF0;
-  SendBuffer[10] = 0x00;
-  SendBuffer[11] = 0x00;
+  sendBuffer[9] &= 0xF0;
+  sendBuffer[10] = 0x00;
+  sendBuffer[11] = 0x00;
   uint8_t summ = 0x00;
   uint8_t crc = 0x00;
   uint8_t cur_nible;
   for (int i = 0; i < 10; i++)
   {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
+    cur_nible = (sendBuffer[i] & 0xF0) >> 4;
     summ += cur_nible;
     if (i != 3)
     {
@@ -188,7 +188,7 @@ void Oregon_TM::calculateAndSetChecksum129(void)
         else
           crc <<= 1;
     }
-    cur_nible = SendBuffer[i] & 0x0F;
+    cur_nible = sendBuffer[i] & 0x0F;
     summ += cur_nible;
     if (i != 2)
     {
@@ -200,25 +200,25 @@ void Oregon_TM::calculateAndSetChecksum129(void)
           crc <<= 1;
     }
   }
-  SendBuffer[9] += summ & 0x0F;
-  SendBuffer[10] += summ & 0xF0;
-  SendBuffer[10] += crc & 0x0F;
-  SendBuffer[11] += crc & 0xF0;
+  sendBuffer[9] += summ & 0x0F;
+  sendBuffer[10] += summ & 0xF0;
+  sendBuffer[10] += crc & 0x0F;
+  sendBuffer[11] += crc & 0xF0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::calculateAndSetChecksum132(void)
 {
-  SendBuffer[7] &= 0xF0;
-  SendBuffer[8] = 0x00;
-  SendBuffer[9] = 0x00;
+  sendBuffer[7] &= 0xF0;
+  sendBuffer[8] = 0x00;
+  sendBuffer[9] = 0x00;
   uint8_t summ = 0x00;
   uint8_t crc = 0x3C;
   uint8_t cur_nible;
   for (int i = 0; i < 8; i++)
   {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
+    cur_nible = (sendBuffer[i] & 0xF0) >> 4;
     summ += cur_nible;
     if (i != 3)
     {
@@ -229,7 +229,7 @@ void Oregon_TM::calculateAndSetChecksum132(void)
         else
           crc <<= 1;
     }
-    cur_nible = SendBuffer[i] & 0x0F;
+    cur_nible = sendBuffer[i] & 0x0F;
     summ += cur_nible;
     if (i != 2)
     {
@@ -241,10 +241,10 @@ void Oregon_TM::calculateAndSetChecksum132(void)
           crc <<= 1;
     }
   }
-  SendBuffer[7] += summ & 0x0F;
-  SendBuffer[8] += summ & 0xF0;
-  SendBuffer[8] += crc & 0x0F;
-  SendBuffer[9] += crc & 0xF0;
+  sendBuffer[7] += summ & 0x0F;
+  sendBuffer[8] += summ & 0xF0;
+  sendBuffer[8] += crc & 0x0F;
+  sendBuffer[9] += crc & 0xF0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -252,11 +252,11 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
 {
   uint8_t summ = 0x00;
   uint8_t crc = 0xD6;
-  SendBuffer[6] = SendBuffer[7] = 0x00;
+  sendBuffer[6] = sendBuffer[7] = 0x00;
   uint8_t cur_nible;
   for (int i = 0; i < 6; i++)
   {
-    cur_nible = (SendBuffer[i] & 0xF0) >> 4;
+    cur_nible = (sendBuffer[i] & 0xF0) >> 4;
     summ += cur_nible;
     if (i != 3)
     {
@@ -267,7 +267,7 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
         else
           crc <<= 1;
     }
-    cur_nible = SendBuffer[i] & 0x0F;
+    cur_nible = sendBuffer[i] & 0x0F;
     summ += cur_nible;
     if (i != 2)
     {
@@ -285,10 +285,10 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
     else
       crc <<= 1;
 
-  SendBuffer[6] += (summ & 0x0F) << 4;
-  SendBuffer[6] += (summ & 0xF0) >> 4;
-  SendBuffer[7] += (crc & 0x0F) << 4;
-  SendBuffer[7] += (crc & 0xF0) >> 4;
+  sendBuffer[6] += (summ & 0x0F) << 4;
+  sendBuffer[6] += (summ & 0xF0) >> 4;
+  sendBuffer[7] += (crc & 0x0F) << 4;
+  sendBuffer[7] += (crc & 0xF0) >> 4;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -316,44 +316,44 @@ void Oregon_TM::transmit()
 void Oregon_TM::setType(uint16_t type)
 {
   sens_type = type;
-  SendBuffer[0] = (type & 0xFF00) >> 8;
-  SendBuffer[1] = type & 0x00FF;
+  sendBuffer[0] = (type & 0xFF00) >> 8;
+  sendBuffer[1] = type & 0x00FF;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::setChannel(uint8_t channel)
 {
-  SendBuffer[2] &= 0x0F;
-  SendBuffer[2] += (channel << 4) & 0xF0;
+  sendBuffer[2] &= 0x0F;
+  sendBuffer[2] += (channel << 4) & 0xF0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::setId(uint8_t ID)
 {
-  SendBuffer[2] &= 0xF0;
-  SendBuffer[2] += (ID & 0xF0) >> 4;
-  SendBuffer[3] &= 0x0F;
-  SendBuffer[3] += (ID & 0x0F) << 4;
+  sendBuffer[2] &= 0xF0;
+  sendBuffer[2] += (ID & 0xF0) >> 4;
+  sendBuffer[3] &= 0x0F;
+  sendBuffer[3] += (ID & 0x0F) << 4;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::setBatteryFlag(bool level)
 {
-  SendBuffer[3] &= 0xFB;
+  sendBuffer[3] &= 0xFB;
   if (level)
-    SendBuffer[3] |= 0x04;
+    sendBuffer[3] |= 0x04;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Oregon_TM::setStartCount(uint8_t startcount)
 {
-  SendBuffer[3] &= 0xF4;
+  sendBuffer[3] &= 0xF4;
   if (startcount == 8)
-    SendBuffer[3] |= 0x08;
+    sendBuffer[3] |= 0x08;
   if (startcount == 2)
-    SendBuffer[3] |= 0x02;
+    sendBuffer[3] |= 0x02;
   if (startcount == 1)
-    SendBuffer[3] |= 0x01;
+    sendBuffer[3] |= 0x01;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -365,31 +365,31 @@ void Oregon_TM::setPressure(float mm_hg_pressure)
   if (sens_type == BTHGN129)
   {
     pressure = (uint8_t)(mm_hg_pressure - 795);
-    SendBuffer[7] &= 0xF0;
-    SendBuffer[7] += pressure & 0x0F;
-    SendBuffer[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
+    sendBuffer[7] &= 0xF0;
+    sendBuffer[7] += pressure & 0x0F;
+    sendBuffer[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
   }
 
   // prediction on nibble 18
   if (mm_hg_pressure < 1000)
   {
     // rainy
-    SendBuffer[9] = 0x30;
+    sendBuffer[9] = 0x30;
   }
   else if (mm_hg_pressure < 1010)
   {
     // cloudy
-    SendBuffer[9] = 0x20;
+    sendBuffer[9] = 0x20;
   }
   else if (mm_hg_pressure < 1025)
   {
     // partly cloudy
-    SendBuffer[9] = 0x60;
+    sendBuffer[9] = 0x60;
   }
   else
   {
     // Sunny
-    SendBuffer[9] = 0xC0;
+    sendBuffer[9] = 0xC0;
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -397,21 +397,21 @@ void Oregon_TM::setTemperature(float temp)
 {
   if (temp < 0)
   {
-    SendBuffer[5] = 0x08;
+    sendBuffer[5] = 0x08;
     temp *= -1;
   }
   else
   {
-    SendBuffer[5] = 0x00;
+    sendBuffer[5] = 0x00;
   }
   uint8_t tempInt = (uint8_t)temp;
   uint8_t td = (tempInt / 10);
   uint8_t tf = tempInt - td * 10;
   uint8_t tempFloat = (temp - (float)tempInt) * 10;
 
-  SendBuffer[5] += (td << 4);
-  SendBuffer[4] = tf;
-  SendBuffer[4] |= (tempFloat << 4);
+  sendBuffer[5] += (td << 4);
+  sendBuffer[4] = tf;
+  sendBuffer[4] |= (tempFloat << 4);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -419,8 +419,8 @@ void Oregon_TM::setHumidity(uint8_t hum)
 {
   if (sens_type != THN132)
   {
-    SendBuffer[6] = (hum / 10);
-    SendBuffer[6] += (hum - (SendBuffer[6] * 10)) << 4;
+    sendBuffer[6] = (hum / 10);
+    sendBuffer[6] += (hum - (sendBuffer[6] * 10)) << 4;
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -431,21 +431,21 @@ void Oregon_TM::setComfort(float temp, uint8_t hum)
   {
     if (hum > 70)
     {
-      SendBuffer[7] = 0xC0;
+      sendBuffer[7] = 0xC0;
       return;
     }
     if (hum < 40)
     {
-      SendBuffer[7] = 0x80;
+      sendBuffer[7] = 0x80;
       return;
     }
     if (temp > 20 && temp < 25)
     {
-      SendBuffer[7] = 0x40;
+      sendBuffer[7] = 0x40;
       return;
     }
     else
-      SendBuffer[7] = 0x00;
+      sendBuffer[7] = 0x00;
     return;
   }
 }

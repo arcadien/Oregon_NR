@@ -55,7 +55,7 @@
 #define THN132 0xEC40
 #define BTHGN129 0x5D53
 
-#define OREGON_SEND_BUFFER_SIZE 24
+static const uint8_t OREGON_BUFFER_MAX_SIZE_IN_BYTES = 16;
 
 class TimeMarkerBase
 {
@@ -165,7 +165,7 @@ private:
 #endif
 
 	uint8_t buffer_size;
-	uint8_t SendBuffer[16];
+	uint8_t sendBuffer[OREGON_BUFFER_MAX_SIZE_IN_BYTES];
 	uint16_t sens_type;
 	uint8_t timing_corrector2;
 	uint8_t CCIT_POLY;

@@ -59,7 +59,7 @@ void loop() {
       if (transmitter.buffer_size > MAX_SEND_BUFFER) transmitter.buffer_size = MAX_SEND_BUFFER;
       //Переписываем буфер из приёмника в передатчик
       for ( int q = 0; q < transmitter.max_buffer_size; q++)
-        transmitter.SendBuffer[q] = oregon.packet[q*2+1] + oregon.packet[q*2]*16;        
+        transmitter.sendBuffer[q] = oregon.packet[q*2+1] + oregon.packet[q*2]*16;        
 
       //Будем передавать в том же протоколе, что и приняли
       transmitter.protocol = oregon.ver;
